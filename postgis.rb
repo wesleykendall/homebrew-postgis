@@ -119,7 +119,7 @@ class Postgis < Formula
     include.install Dir["stage/**/include/*"]
 
     # Stand-alone SQL files will be installed the share folder
-    (share/"postgis").install Dir["stage/**/contrib/postgis-2.1/*"]
+    (share/"postgis").install Dir["stage/**/contrib/postgis-2.4/*"]
 
     # Extension scripts
     bin.install %w[
@@ -140,11 +140,11 @@ class Postgis < Formula
     pg = Formula["postgresql@9.6"].opt_prefix
     <<-EOS.undent
       To create a spatially-enabled database, see the documentation:
-        http://postgis.net/docs/manual-2.1/postgis_installation.html#create_new_db_extensions
+        http://postgis.net/docs/manual-2.4/postgis_installation.html#create_new_db_extensions
       If you are currently using PostGIS 2.0+, you can go the soft upgrade path:
-        ALTER EXTENSION postgis UPDATE TO "2.1.5";
+        ALTER EXTENSION postgis UPDATE TO "2.4.0";
       Users of 1.5 and below will need to go the hard-upgrade path, see here:
-        http://postgis.net/docs/manual-2.1/postgis_installation.html#upgrading
+        http://postgis.net/docs/manual-2.4/postgis_installation.html#upgrading
 
       PostGIS SQL scripts installed to:
         #{HOMEBREW_PREFIX}/share/postgis
