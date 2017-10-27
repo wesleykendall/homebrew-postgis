@@ -5,13 +5,20 @@ class Postgis < Formula
   sha256 "02baa90f04da41e04b6c18eedfda53110c45ae943d4e65050f6d202f7de07d29"
   revision 1
 
-  bottle do
-    cellar :any
-    sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
-    sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
-    sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
-  end
+  #bottle do
+  #  cellar :any
+  #  sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
+  #  sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
+  #  sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
+  #end
 
+  def pour_bottle?
+    # Postgres extensions must live in the Postgres prefix, which precludes
+    # bottling: https://github.com/Homebrew/homebrew/issues/10247
+    # Overcoming this will likely require changes in Postgres itself.
+    false
+  end
+  
   head do
     url "https://svn.osgeo.org/postgis/trunk/"
 
