@@ -102,15 +102,6 @@ class Postgis < Formula
     mkdir "stage"
     system "make", "install", "DESTDIR=#{buildpath}/stage"
     
-    # Install PostGIS plugin libraries into the Postgres keg so that they can
-    # be loaded and so PostGIS databases will continue to function even if
-    # PostGIS is removed.
-    # (postgres_realpath/"lib").install Dir["stage/**/*.so"]
-
-    # Install extension scripts to the Postgres keg.
-    # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    # (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
-    
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
     include.install Dir["stage/**/include/*"]
@@ -118,6 +109,15 @@ class Postgis < Formula
     (share/"postgresql@9.6/extension").install Dir["stage/**/share/postgresql@9.6/extension/*"]
     pkgshare.install Dir["stage/**/contrib/postgis-*/*"]
     (share/"postgis_topology").install Dir["stage/**/contrib/postgis_topology-*/*"]
+
+    # Install PostGIS plugin libraries into the Postgres keg so that they can
+    # be loaded and so PostGIS databases will continue to function even if
+    # PostGIS is removed.
+    (postgres_realpath/"lib").install Dir["stage/**/*.so"]
+
+    # Install extension scripts to the Postgres keg.
+    # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
+    (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
 
     # Extension scripts
     bin.install %w[
