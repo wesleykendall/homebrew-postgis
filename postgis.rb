@@ -1,4 +1,4 @@
-class PostgisAT96 < Formula
+class Postgis < Formula
   desc "Adds support for geographic objects to PostgreSQL 9.6"
   homepage "https://postgis.net/"
   url "http://download.osgeo.org/postgis/source/postgis-2.4.0.tar.gz"
