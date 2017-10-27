@@ -5,12 +5,12 @@ class Postgis < Formula
   sha256 "02baa90f04da41e04b6c18eedfda53110c45ae943d4e65050f6d202f7de07d29"
   revision 1
 
-  #bottle do
-  #  cellar :any
-  #  sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
-  #  sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
-  #  sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
-  #end
+  bottle do
+    cellar :any
+    sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
+    sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
+    sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
+  end
 
   head do
     url "https://svn.osgeo.org/postgis/trunk/"
@@ -52,6 +52,10 @@ class Postgis < Formula
   end
 
   def install
+    # Follow the PostgreSQL linked keg back to the active Postgres installation
+    # as it is common for people to avoid upgrading Postgres.
+    postgres_realpath = Formula["postgresql@9.6"].opt_prefix.realpath
+
     ENV.deparallelize
 
     args = [
@@ -90,6 +94,11 @@ class Postgis < Formula
 
     mkdir "stage"
     system "make", "install", "DESTDIR=#{buildpath}/stage"
+    
+    # Install PostGIS plugin libraries into the Postgres keg so that they can
+    # be loaded and so PostGIS databases will continue to function even if
+    # PostGIS is removed.
+    (postgres_realpath/"lib").install Dir["stage/**/*.so"]
 
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
