@@ -100,6 +100,10 @@ class Postgis < Formula
     # PostGIS is removed.
     (postgres_realpath/"lib").install Dir["stage/**/*.so"]
 
+    # Install extension scripts to the Postgres keg.
+    # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
+    (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
+    
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
     include.install Dir["stage/**/include/*"]
