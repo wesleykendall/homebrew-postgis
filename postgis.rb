@@ -5,20 +5,13 @@ class Postgis < Formula
   sha256 "02baa90f04da41e04b6c18eedfda53110c45ae943d4e65050f6d202f7de07d29"
   revision 1
 
-  #bottle do
-  #  cellar :any
-  #  sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
-  #  sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
-  #  sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
-  #end
-
-  def pour_bottle?
-    # Postgres extensions must live in the Postgres prefix, which precludes
-    # bottling: https://github.com/Homebrew/homebrew/issues/10247
-    # Overcoming this will likely require changes in Postgres itself.
-    false
+  bottle do
+    cellar :any
+    sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
+    sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
+    sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
   end
-  
+
   head do
     url "https://svn.osgeo.org/postgis/trunk/"
 
@@ -59,10 +52,6 @@ class Postgis < Formula
   end
 
   def install
-    # Follow the PostgreSQL linked keg back to the active Postgres installation
-    # as it is common for people to avoid upgrading Postgres.
-    postgres_realpath = Formula["postgresql@9.6"].opt_prefix.realpath
-
     ENV.deparallelize
 
     args = [
@@ -101,23 +90,14 @@ class Postgis < Formula
 
     mkdir "stage"
     system "make", "install", "DESTDIR=#{buildpath}/stage"
-    
+
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
     include.install Dir["stage/**/include/*"]
-    (doc/"postgresql@9.6/9.6.5/extension").install Dir["stage/**/share/doc/postgresql@9.6/extension/*"]
-    (share/"postgresql@9.6/9.6.5/extension").install Dir["stage/**/share/postgresql@9.6/extension/*"]
+    (doc/"postgresql/extension").install Dir["stage/**/share/doc/postgresql/extension/*"]
+    (share/"postgresql/extension").install Dir["stage/**/share/postgresql/extension/*"]
     pkgshare.install Dir["stage/**/contrib/postgis-*/*"]
     (share/"postgis_topology").install Dir["stage/**/contrib/postgis_topology-*/*"]
-
-    # Install PostGIS plugin libraries into the Postgres keg so that they can
-    # be loaded and so PostGIS databases will continue to function even if
-    # PostGIS is removed.
-    (postgres_realpath/"lib").install Dir["stage/**/*.so"]
-
-    # Install extension scripts to the Postgres keg.
-    # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    (postgres_realpath/"share/postgresql@9.6/9.6.5/extension").install Dir["stage/**/share/postgresql@9.6/extension/*"]
 
     # Extension scripts
     bin.install %w[
@@ -148,7 +128,7 @@ class Postgis < Formula
       PostGIS plugin libraries installed to:
         #{HOMEBREW_PREFIX}/lib
       PostGIS extension modules installed to:
-        #{HOMEBREW_PREFIX}/share/postgresql@9.6/extension
+        #{HOMEBREW_PREFIX}/share/postgresql/extension
       EOS
   end
 
