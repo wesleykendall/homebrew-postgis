@@ -54,7 +54,7 @@ class PostgisAT96 < Formula
   def install
     # Follow the PostgreSQL linked keg back to the active Postgres installation
     # as it is common for people to avoid upgrading Postgres.
-    postgres_realpath = Formula["postgresql@9.6"].opt_prefix.realpath
+    postgres_realpath = Formula["postgresql@9.6"].opt_bin
 
     ENV.deparallelize
 
