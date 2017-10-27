@@ -52,16 +52,12 @@ class PostgisAT96 < Formula
   end
 
   def install
-    # Follow the PostgreSQL linked keg back to the active Postgres installation
-    # as it is common for people to avoid upgrading Postgres.
-    postgres_realpath = Formula["postgresql@9.6"].opt_bin
-
     ENV.deparallelize
 
     args = [
       "--with-projdir=#{Formula["proj"].opt_prefix}",
       "--with-jsondir=#{Formula["json-c"].opt_prefix}",
-      "--with-pgconfig=#{postgres_realpath}/pg_config",
+      "--with-pgconfig=#{Formula["postgresql@9.6"].opt_bin}/pg_config",
       # Unfortunately, NLS support causes all kinds of headaches because
       # PostGIS gets all of its compiler flags from the PGXS makefiles. This
       # makes it nigh impossible to tell the buildsystem where our keg-only
@@ -98,11 +94,11 @@ class PostgisAT96 < Formula
     # Install PostGIS plugin libraries into the Postgres keg so that they can
     # be loaded and so PostGIS databases will continue to function even if
     # PostGIS is removed.
-    (postgres_realpath/"lib").install Dir["stage/**/*.so"]
+    (#{Formula["postgresql@9.6"].opt_lib}).install Dir["stage/**/*.so"]
 
     # Install extension scripts to the Postgres keg.
     # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
+    (#{Formula["postgresql@9.6"].opt_share}/"postgresql/extension").install Dir["stage/**/extension/*"]
     
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
