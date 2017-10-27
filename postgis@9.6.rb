@@ -96,11 +96,11 @@ class PostgisAT96 < Formula
     # Install PostGIS plugin libraries into the Postgres keg so that they can
     # be loaded and so PostGIS databases will continue to function even if
     # PostGIS is removed.
-    (postgres_realpath/"lib").install Dir["stage/**/*.so"]
+    # (postgres_realpath/"lib").install Dir["stage/**/*.so"]
 
     # Install extension scripts to the Postgres keg.
     # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
+    # (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
     
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
@@ -111,7 +111,7 @@ class PostgisAT96 < Formula
     (share/"postgis_topology").install Dir["stage/**/contrib/postgis_topology-*/*"]
 
     # Stand-alone SQL files will be installed the share folder
-    (share/"postgis").install Dir["stage/**/contrib/postgis-*/*"]
+    # (share/"postgis").install Dir["stage/**/contrib/postgis-*/*"]
 
     # Extension scripts
     bin.install %w[
