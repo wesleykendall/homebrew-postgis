@@ -105,8 +105,8 @@ class Postgis < Formula
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
     include.install Dir["stage/**/include/*"]
-    (doc/"postgresql@9.6/extension").install Dir["stage/**/share/doc/postgresql@9.6/extension/*"]
-    (share/"postgresql@9.6/extension").install Dir["stage/**/share/postgresql@9.6/extension/*"]
+    (doc/"postgresql@9.6/*/extension").install Dir["stage/**/share/doc/postgresql@9.6/*/extension/*"]
+    (share/"postgresql@9.6/*/extension").install Dir["stage/**/share/postgresql@9.6/*/extension/*"]
     pkgshare.install Dir["stage/**/contrib/postgis-*/*"]
     (share/"postgis_topology").install Dir["stage/**/contrib/postgis_topology-*/*"]
 
@@ -117,7 +117,7 @@ class Postgis < Formula
 
     # Install extension scripts to the Postgres keg.
     # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    (postgres_realpath/"share/postgresql@9.6/extension").install Dir["stage/**/share/postgresql@9.6/extension/*"]
+    (postgres_realpath/"share/postgresql@9.6/*/extension").install Dir["stage/**/share/postgresql@9.6/*/extension/*"]
 
     # Extension scripts
     bin.install %w[
