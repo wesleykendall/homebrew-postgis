@@ -105,11 +105,11 @@ class Postgis < Formula
     # Install PostGIS plugin libraries into the Postgres keg so that they can
     # be loaded and so PostGIS databases will continue to function even if
     # PostGIS is removed.
-    (postgres_realpath/"lib").install Dir["stage/**/*.so"]
+    # (postgres_realpath/"lib").install Dir["stage/**/*.so"]
 
     # Install extension scripts to the Postgres keg.
     # `CREATE EXTENSION postgis;` won't work if these are located elsewhere.
-    (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
+    # (postgres_realpath/"share/postgresql/extension").install Dir["stage/**/extension/*"]
     
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
