@@ -26,7 +26,7 @@ class Postgis < Formula
 
   depends_on "pkg-config" => :build
   depends_on "gpp" => :build
-  # depends_on "postgresql"
+  depends_on "postgresql"
   depends_on "proj"
   depends_on "geos"
 
