@@ -1,15 +1,14 @@
-class Postgis96 < Formula
+class Postgis < Formula
   desc "Adds support for geographic objects to PostgreSQL"
   homepage "https://postgis.net/"
-  url "http://download.osgeo.org/postgis/source/postgis-2.4.0.tar.gz"
-  sha256 "02baa90f04da41e04b6c18eedfda53110c45ae943d4e65050f6d202f7de07d29"
-  revision 1
+  url "http://download.osgeo.org/postgis/source/postgis-2.3.2.tar.gz"
+  sha256 "e92e34c18f078a3d1a2503cd870efdc4fa9e134f0bcedbbbdb8b46b0e6af09e4"
 
   bottle do
     cellar :any
-    sha256 "9b90abbc56d3bbe28896bf078f34a578a9c537bbead004a96a50c1815d4331ed" => :high_sierra
-    sha256 "2a5b3074818d361d737a34061de971f55120ca12cb584e3d723871a1b2ac7ce7" => :sierra
-    sha256 "52a987c5512241e6318a72736f1267d84fc1fbf8cbc02a45a38b47508a3a18bc" => :el_capitan
+    sha256 "cea4e412efe966694749f6e1feaa11db1dd47970a9f6ac63afd1765b50f56d85" => :sierra
+    sha256 "83a1e64c57c69d4e85a1678e772798b2cd04aaba26ab5ce75b678d41d7bc6cf7" => :el_capitan
+    sha256 "719efe3d8589e4923ff5a89e542df813053b59695b9d16f1cb2eb88db93e62ce" => :yosemite
   end
 
   head do
@@ -27,7 +26,7 @@ class Postgis96 < Formula
 
   depends_on "pkg-config" => :build
   depends_on "gpp" => :build
-  depends_on "postgresql@9.6"
+  depends_on "postgresql"
   depends_on "proj"
   depends_on "geos"
 
@@ -57,7 +56,7 @@ class Postgis96 < Formula
     args = [
       "--with-projdir=#{Formula["proj"].opt_prefix}",
       "--with-jsondir=#{Formula["json-c"].opt_prefix}",
-      "--with-pgconfig=#{Formula["postgresql@9.6"].opt_bin}/pg_config",
+      "--with-pgconfig=#{Formula["postgresql"].opt_bin}/pg_config",
       # Unfortunately, NLS support causes all kinds of headaches because
       # PostGIS gets all of its compiler flags from the PGXS makefiles. This
       # makes it nigh impossible to tell the buildsystem where our keg-only
@@ -94,8 +93,8 @@ class Postgis96 < Formula
     bin.install Dir["stage/**/bin/*"]
     lib.install Dir["stage/**/lib/*"]
     include.install Dir["stage/**/include/*"]
-    (doc/"postgresql@9.6/extension").install Dir["stage/**/share/doc/postgresql@9.6/extension/*"]
-    (share/"postgresql@9.6/extension").install Dir["stage/**/share/postgresql@9.6/extension/*"]
+    (doc/"postgresql/extension").install Dir["stage/**/share/doc/postgresql/extension/*"]
+    (share/"postgresql/extension").install Dir["stage/**/share/postgresql/extension/*"]
     pkgshare.install Dir["stage/**/contrib/postgis-*/*"]
     (share/"postgis_topology").install Dir["stage/**/contrib/postgis_topology-*/*"]
 
@@ -115,13 +114,13 @@ class Postgis96 < Formula
   end
 
   def caveats
-    <<~EOS
+    <<-EOS.undent
       To create a spatially-enabled database, see the documentation:
-        https://postgis.net/docs/manual-2.4/postgis_installation.html#create_new_db_extensions
+        https://postgis.net/docs/manual-2.2/postgis_installation.html#create_new_db_extensions
       If you are currently using PostGIS 2.0+, you can go the soft upgrade path:
         ALTER EXTENSION postgis UPDATE TO "#{version}";
       Users of 1.5 and below will need to go the hard-upgrade path, see here:
-        https://postgis.net/docs/manual-2.4/postgis_installation.html#upgrading
+        https://postgis.net/docs/manual-2.2/postgis_installation.html#upgrading
 
       PostGIS SQL scripts installed to:
         #{opt_pkgshare}
@@ -134,7 +133,7 @@ class Postgis96 < Formula
 
   test do
     require "base64"
-    (testpath/"brew.shp").write ::Base64.decode64 <<~EOS
+    (testpath/"brew.shp").write ::Base64.decode64 <<-EOS.undent
       AAAnCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoOgDAAALAAAAAAAAAAAAAAAA
       AAAAAADwPwAAAAAAABBAAAAAAAAAFEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
       AAAAAAAAAAAAAAAAAAEAAAASCwAAAAAAAAAAAPA/AAAAAAAA8D8AAAAAAAAA
@@ -144,7 +143,7 @@ class Postgis96 < Formula
       AAAAAAAAAAAABQAAABILAAAAAAAAAAAAAAAAAAAAAAAUQAAAAAAAACJAAAAA
       AAAAAEA=
     EOS
-    (testpath/"brew.dbf").write ::Base64.decode64 <<~EOS
+    (testpath/"brew.dbf").write ::Base64.decode64 <<-EOS.undent
       A3IJGgUAAABhAFsAAAAAAAAAAAAAAAAAAAAAAAAAAABGSVJTVF9GTEQAAEMA
       AAAAMgAAAAAAAAAAAAAAAAAAAFNFQ09ORF9GTEQAQwAAAAAoAAAAAAAAAAAA
       AAAAAAAADSBGaXJzdCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
@@ -159,7 +158,7 @@ class Postgis96 < Formula
       ICAgICAgICAgICAgICAgICBQb2ludCAgICAgICAgICAgICAgICAgICAgICAg
       ICAgICAgICAgICAg
     EOS
-    (testpath/"brew.shx").write ::Base64.decode64 <<~EOS
+    (testpath/"brew.shx").write ::Base64.decode64 <<-EOS.undent
       AAAnCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARugDAAALAAAAAAAAAAAAAAAA
       AAAAAADwPwAAAAAAABBAAAAAAAAAFEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
       AAAAAAAAAAAAAAAAADIAAAASAAAASAAAABIAAABeAAAAEgAAAHQAAAASAAAA
