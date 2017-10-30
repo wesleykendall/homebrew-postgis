@@ -12,24 +12,18 @@ class Postgresql96 < Formula
     sha256 "8a74b1afc029179dd1ff653e5a5016476ce0fd6e6260ca2a067b1de2043d0265" => :yosemite
   end
 
+  keg_only :versioned_formula
+
   option "without-perl", "Build without Perl support"
   option "without-tcl", "Build without Tcl support"
   option "with-dtrace", "Build with DTrace support"
-  option "with-python", "Enable PL/Python2"
-  option "with-python3", "Enable PL/Python3 (incompatible with --with-python)"
-
-  deprecated_option "no-perl" => "without-perl"
-  deprecated_option "no-tcl" => "without-tcl"
-  deprecated_option "enable-dtrace" => "with-dtrace"
+  option "with-python", "Build with Python2 (incompatible with --with-python3)"
+  option "with-python3", "Build with Python3 (incompatible with --with-python)"
 
   depends_on "openssl"
   depends_on "readline"
-
   depends_on :python => :optional
   depends_on :python3 => :optional
-
-  conflicts_with "postgres-xc",
-    :because => "postgresql and postgres-xc install the same binaries."
 
   fails_with :clang do
     build 211
@@ -37,18 +31,18 @@ class Postgresql96 < Formula
   end
 
   def install
-    # avoid adding the SDK library directory to the linker search path
-    ENV["XML2_CONFIG"] = "xml2-config --exec-prefix=/usr"
-
     ENV.prepend "LDFLAGS", "-L#{Formula["openssl"].opt_lib} -L#{Formula["readline"].opt_lib}"
     ENV.prepend "CPPFLAGS", "-I#{Formula["openssl"].opt_include} -I#{Formula["readline"].opt_include}"
+
+    # avoid adding the SDK library directory to the linker search path
+    ENV["XML2_CONFIG"] = "xml2-config --exec-prefix=/usr"
 
     args = %W[
       --disable-debug
       --prefix=#{prefix}
-      --datadir=#{HOMEBREW_PREFIX}/share/postgresql
-      --libdir=#{HOMEBREW_PREFIX}/lib
-      --sysconfdir=#{etc}
+      --datadir=#{pkgshare}
+      --libdir=#{lib}
+      --sysconfdir=#{prefix}/etc
       --docdir=#{doc}
       --enable-thread-safety
       --with-bonjour
@@ -88,14 +82,14 @@ class Postgresql96 < Formula
     system "make"
     system "make", "install-world", "datadir=#{pkgshare}",
                                     "libdir=#{lib}",
-                                    "pkglibdir=#{lib}/postgresql"
+                                    "pkglibdir=#{lib}"
   end
 
   def post_install
     (var/"log").mkpath
-    (var/"postgres").mkpath
-    unless File.exist? "#{var}/postgres/PG_VERSION"
-      system "#{bin}/initdb", "#{var}/postgres"
+    (var/name).mkpath
+    unless File.exist? "#{var}/#{name}/PG_VERSION"
+      system "#{bin}/initdb", "#{var}/#{name}"
     end
   end
 
@@ -105,17 +99,17 @@ class Postgresql96 < Formula
       https://github.com/Homebrew/legacy-homebrew/issues/2510
 
     To migrate existing data from a previous major version (pre-9.0) of PostgreSQL, see:
-      https://www.postgresql.org/docs/9.6/static/upgrading.html
+      https://www.postgresql.org/docs/9.5/static/upgrading.html
 
-    To migrate existing data from a previous minor version (9.0-9.5) of PostgreSQL, see:
-      https://www.postgresql.org/docs/9.6/static/pgupgrade.html
+    To migrate existing data from a previous minor version (9.0-9.4) of PostgreSQL, see:
+      https://www.postgresql.org/docs/9.5/static/pgupgrade.html
 
       You will need your previous PostgreSQL installation from brew to perform `pg_upgrade`.
-      Do not run `brew cleanup postgresql` until you have performed the migration.
+      Do not run `brew cleanup postgresql@9.5` until you have performed the migration.
     EOS
   end
 
-  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgres start"
+  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgresql@9.5 start"
 
   def plist; <<-EOS.undent
     <?xml version="1.0" encoding="UTF-8"?>
@@ -130,14 +124,14 @@ class Postgresql96 < Formula
       <array>
         <string>#{opt_bin}/postgres</string>
         <string>-D</string>
-        <string>#{var}/postgres</string>
+        <string>#{var}/#{name}</string>
       </array>
       <key>RunAtLoad</key>
       <true/>
       <key>WorkingDirectory</key>
       <string>#{HOMEBREW_PREFIX}</string>
       <key>StandardErrorPath</key>
-      <string>#{var}/log/postgres.log</string>
+      <string>#{var}/log/#{name}.log</string>
     </dict>
     </plist>
     EOS
@@ -145,8 +139,8 @@ class Postgresql96 < Formula
 
   test do
     system "#{bin}/initdb", testpath/"test"
-    assert_equal "#{HOMEBREW_PREFIX}/share/postgresql", shell_output("#{bin}/pg_config --sharedir").chomp
-    assert_equal "#{HOMEBREW_PREFIX}/lib", shell_output("#{bin}/pg_config --libdir").chomp
-    assert_equal "#{HOMEBREW_PREFIX}/lib/postgresql", shell_output("#{bin}/pg_config --pkglibdir").chomp
+    assert_equal pkgshare.to_s, shell_output("#{bin}/pg_config --sharedir").chomp
+    assert_equal lib.to_s, shell_output("#{bin}/pg_config --libdir").chomp
+    assert_equal lib.to_s, shell_output("#{bin}/pg_config --pkglibdir").chomp
   end
 end
