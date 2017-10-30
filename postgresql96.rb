@@ -46,7 +46,7 @@ class Postgresql96 < Formula
     args = %W[
       --disable-debug
       --prefix=#{prefix}
-      --datadir=#{HOMEBREW_PREFIX}/share/postgresql
+      --datadir=#{HOMEBREW_PREFIX}/share/postgresql96
       --libdir=#{HOMEBREW_PREFIX}/lib
       --sysconfdir=#{etc}
       --docdir=#{doc}
@@ -88,7 +88,7 @@ class Postgresql96 < Formula
     system "make"
     system "make", "install-world", "datadir=#{pkgshare}",
                                     "libdir=#{lib}",
-                                    "pkglibdir=#{lib}/postgresql"
+                                    "pkglibdir=#{lib}/postgresql96"
   end
 
   def post_install
@@ -145,8 +145,8 @@ class Postgresql96 < Formula
 
   test do
     system "#{bin}/initdb", testpath/"test"
-    assert_equal "#{HOMEBREW_PREFIX}/share/postgresql", shell_output("#{bin}/pg_config --sharedir").chomp
+    assert_equal "#{HOMEBREW_PREFIX}/share/postgresql96", shell_output("#{bin}/pg_config --sharedir").chomp
     assert_equal "#{HOMEBREW_PREFIX}/lib", shell_output("#{bin}/pg_config --libdir").chomp
-    assert_equal "#{HOMEBREW_PREFIX}/lib/postgresql", shell_output("#{bin}/pg_config --pkglibdir").chomp
+    assert_equal "#{HOMEBREW_PREFIX}/lib/postgresql96", shell_output("#{bin}/pg_config --pkglibdir").chomp
   end
 end
