@@ -1,152 +1,171 @@
-class Postgresql96 < Formula
-  desc "Object-relational database system"
-  homepage "https://www.postgresql.org/"
-  url "https://ftp.postgresql.org/pub/source/v9.6.5/postgresql-9.6.5.tar.bz2"
-  sha256 "06da12a7e3dddeb803962af8309fa06da9d6989f49e22865335f0a14bad0744c"
-  head "https://github.com/postgres/postgres.git"
+class Postgis < Formula
+  desc "Adds support for geographic objects to PostgreSQL"
+  homepage "https://postgis.net/"
+  url "http://download.osgeo.org/postgis/source/postgis-2.3.2.tar.gz"
+  sha256 "e92e34c18f078a3d1a2503cd870efdc4fa9e134f0bcedbbbdb8b46b0e6af09e4"
 
   bottle do
-    sha256 "49fdadf8a3c6807f464248a0d150bb216dbc38648bd6278321f98e71c8cc043f" => :high_sierra
-    sha256 "d1cf9ba381f1a92fc4c5df2e861d40d05993ac39c8cd222dd72cd3c820af8cb4" => :sierra
-    sha256 "3b97a7f8b60b80afbcb91eeed7a69c72227b106cc3221566268511525c3322f3" => :el_capitan
-    sha256 "8a74b1afc029179dd1ff653e5a5016476ce0fd6e6260ca2a067b1de2043d0265" => :yosemite
+    cellar :any
+    sha256 "cea4e412efe966694749f6e1feaa11db1dd47970a9f6ac63afd1765b50f56d85" => :sierra
+    sha256 "83a1e64c57c69d4e85a1678e772798b2cd04aaba26ab5ce75b678d41d7bc6cf7" => :el_capitan
+    sha256 "719efe3d8589e4923ff5a89e542df813053b59695b9d16f1cb2eb88db93e62ce" => :yosemite
   end
 
-  option "without-perl", "Build without Perl support"
-  option "without-tcl", "Build without Tcl support"
-  option "with-dtrace", "Build with DTrace support"
-  option "with-python", "Enable PL/Python2"
-  option "with-python3", "Enable PL/Python3 (incompatible with --with-python)"
+  head do
+    url "https://svn.osgeo.org/postgis/trunk/"
 
-  deprecated_option "no-perl" => "without-perl"
-  deprecated_option "no-tcl" => "without-tcl"
-  deprecated_option "enable-dtrace" => "with-dtrace"
+    depends_on "autoconf" => :build
+    depends_on "automake" => :build
+    depends_on "libtool" => :build
+  end
 
-  depends_on "openssl"
-  depends_on "readline"
+  option "with-gui", "Build shp2pgsql-gui in addition to command line tools"
+  option "without-gdal", "Disable postgis raster support"
+  option "with-html-docs", "Generate multi-file HTML documentation"
+  option "with-api-docs", "Generate developer API documentation (long process)"
 
-  depends_on :python => :optional
-  depends_on :python3 => :optional
+  depends_on "pkg-config" => :build
+  depends_on "gpp" => :build
+  depends_on "postgresql96"
+  depends_on "proj"
+  depends_on "geos"
 
-  conflicts_with "postgres-xc",
-    :because => "postgresql and postgres-xc install the same binaries."
+  depends_on "gtk+" if build.with? "gui"
 
-  fails_with :clang do
-    build 211
-    cause "Miscompilation resulting in segfault on queries"
+  # For GeoJSON and raster handling
+  depends_on "json-c"
+  depends_on "gdal" => :recommended
+  depends_on "pcre" if build.with? "gdal"
+
+  # For advanced 2D/3D functions
+  depends_on "sfcgal" => :recommended
+
+  if build.with? "html-docs"
+    depends_on "imagemagick"
+    depends_on "docbook-xsl"
+  end
+
+  if build.with? "api-docs"
+    depends_on "graphviz"
+    depends_on "doxygen"
   end
 
   def install
-    # avoid adding the SDK library directory to the linker search path
-    ENV["XML2_CONFIG"] = "xml2-config --exec-prefix=/usr"
+    ENV.deparallelize
 
-    ENV.prepend "LDFLAGS", "-L#{Formula["openssl"].opt_lib} -L#{Formula["readline"].opt_lib}"
-    ENV.prepend "CPPFLAGS", "-I#{Formula["openssl"].opt_include} -I#{Formula["readline"].opt_include}"
-
-    args = %W[
-      --disable-debug
-      --prefix=#{prefix}
-      --datadir=#{HOMEBREW_PREFIX}/share/postgresql
-      --libdir=#{HOMEBREW_PREFIX}/lib
-      --sysconfdir=#{etc}
-      --docdir=#{doc}
-      --enable-thread-safety
-      --with-bonjour
-      --with-gssapi
-      --with-ldap
-      --with-openssl
-      --with-pam
-      --with-libxml
-      --with-libxslt
+    args = [
+      "--with-projdir=#{Formula["proj"].opt_prefix}",
+      "--with-jsondir=#{Formula["json-c"].opt_prefix}",
+      "--with-pgconfig=#{Formula["postgresql96"].opt_bin}/pg_config",
+      # Unfortunately, NLS support causes all kinds of headaches because
+      # PostGIS gets all of its compiler flags from the PGXS makefiles. This
+      # makes it nigh impossible to tell the buildsystem where our keg-only
+      # gettext installations are.
+      "--disable-nls",
     ]
 
-    args << "--with-perl" if build.with? "perl"
+    args << "--with-gui" if build.with? "gui"
+    args << "--without-raster" if build.without? "gdal"
+    args << "--with-xsldir=#{Formula["docbook-xsl"].opt_prefix}/docbook-xsl" if build.with? "html-docs"
 
-    which_python = nil
-    if build.with?("python") && build.with?("python3")
-      odie "Cannot provide both --with-python and --with-python3"
-    elsif build.with?("python") || build.with?("python3")
-      args << "--with-python"
-      which_python = which(build.with?("python") ? "python" : "python3")
-    end
-    ENV["PYTHON"] = which_python
+    system "./autogen.sh" if build.head?
+    system "./configure", *args
+    system "make"
 
-    # The CLT is required to build Tcl support on 10.7 and 10.8 because
-    # tclConfig.sh is not part of the SDK
-    if build.with?("tcl") && (MacOS.version >= :mavericks || MacOS::CLT.installed?)
-      args << "--with-tcl"
-
-      if File.exist?("#{MacOS.sdk_path}/System/Library/Frameworks/Tcl.framework/tclConfig.sh")
-        args << "--with-tclconfig=#{MacOS.sdk_path}/System/Library/Frameworks/Tcl.framework"
+    if build.with? "html-docs"
+      cd "doc" do
+        ENV["XML_CATALOG_FILES"] = "#{etc}/xml/catalog"
+        system "make", "chunked-html"
+        doc.install "html"
       end
     end
 
-    args << "--enable-dtrace" if build.with? "dtrace"
-    args << "--with-uuid=e2fs"
-
-    system "./configure", *args
-    system "make"
-    system "make", "install-world", "datadir=#{pkgshare}",
-                                    "libdir=#{lib}",
-                                    "pkglibdir=#{lib}/postgresql"
-  end
-
-  def post_install
-    (var/"log").mkpath
-    (var/"postgres").mkpath
-    unless File.exist? "#{var}/postgres/PG_VERSION"
-      system "#{bin}/initdb", "#{var}/postgres"
+    if build.with? "api-docs"
+      cd "doc" do
+        system "make", "doxygen"
+        doc.install "doxygen/html" => "api"
+      end
     end
+
+    mkdir "stage"
+    system "make", "install", "DESTDIR=#{buildpath}/stage"
+
+    bin.install Dir["stage/**/bin/*"]
+    lib.install Dir["stage/**/lib/*"]
+    include.install Dir["stage/**/include/*"]
+    (doc/"postgresql96/extension").install Dir["stage/**/share/doc/postgresql96/extension/*"]
+    (share/"postgresql96/extension").install Dir["stage/**/share/postgresql96/extension/*"]
+    pkgshare.install Dir["stage/**/contrib/postgis-*/*"]
+    (share/"postgis_topology").install Dir["stage/**/contrib/postgis_topology-*/*"]
+
+    # Extension scripts
+    bin.install %w[
+      utils/create_undef.pl
+      utils/postgis_proc_upgrade.pl
+      utils/postgis_restore.pl
+      utils/profile_intersects.pl
+      utils/test_estimation.pl
+      utils/test_geography_estimation.pl
+      utils/test_geography_joinestimation.pl
+      utils/test_joinestimation.pl
+    ]
+
+    man1.install Dir["doc/**/*.1"]
   end
 
-  def caveats; <<-EOS.undent
-    If builds of PostgreSQL 9 are failing and you have version 8.x installed,
-    you may need to remove the previous version first. See:
-      https://github.com/Homebrew/legacy-homebrew/issues/2510
+  def caveats
+    <<-EOS.undent
+      To create a spatially-enabled database, see the documentation:
+        https://postgis.net/docs/manual-2.2/postgis_installation.html#create_new_db_extensions
+      If you are currently using PostGIS 2.0+, you can go the soft upgrade path:
+        ALTER EXTENSION postgis UPDATE TO "#{version}";
+      Users of 1.5 and below will need to go the hard-upgrade path, see here:
+        https://postgis.net/docs/manual-2.2/postgis_installation.html#upgrading
 
-    To migrate existing data from a previous major version (pre-9.0) of PostgreSQL, see:
-      https://www.postgresql.org/docs/9.6/static/upgrading.html
-
-    To migrate existing data from a previous minor version (9.0-9.5) of PostgreSQL, see:
-      https://www.postgresql.org/docs/9.6/static/pgupgrade.html
-
-      You will need your previous PostgreSQL installation from brew to perform `pg_upgrade`.
-      Do not run `brew cleanup postgresql` until you have performed the migration.
-    EOS
-  end
-
-  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgres start"
-
-  def plist; <<-EOS.undent
-    <?xml version="1.0" encoding="UTF-8"?>
-    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-    <plist version="1.0">
-    <dict>
-      <key>KeepAlive</key>
-      <true/>
-      <key>Label</key>
-      <string>#{plist_name}</string>
-      <key>ProgramArguments</key>
-      <array>
-        <string>#{opt_bin}/postgres</string>
-        <string>-D</string>
-        <string>#{var}/postgres</string>
-      </array>
-      <key>RunAtLoad</key>
-      <true/>
-      <key>WorkingDirectory</key>
-      <string>#{HOMEBREW_PREFIX}</string>
-      <key>StandardErrorPath</key>
-      <string>#{var}/log/postgres.log</string>
-    </dict>
-    </plist>
-    EOS
+      PostGIS SQL scripts installed to:
+        #{opt_pkgshare}
+      PostGIS plugin libraries installed to:
+        #{HOMEBREW_PREFIX}/lib
+      PostGIS extension modules installed to:
+        #{HOMEBREW_PREFIX}/share/postgresql96/extension
+      EOS
   end
 
   test do
-    system "#{bin}/initdb", testpath/"test"
-    assert_equal "#{HOMEBREW_PREFIX}/share/postgresql", shell_output("#{bin}/pg_config --sharedir").chomp
-    assert_equal "#{HOMEBREW_PREFIX}/lib", shell_output("#{bin}/pg_config --libdir").chomp
-    assert_equal "#{HOMEBREW_PREFIX}/lib/postgresql", shell_output("#{bin}/pg_config --pkglibdir").chomp
+    require "base64"
+    (testpath/"brew.shp").write ::Base64.decode64 <<-EOS.undent
+      AAAnCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoOgDAAALAAAAAAAAAAAAAAAA
+      AAAAAADwPwAAAAAAABBAAAAAAAAAFEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+      AAAAAAAAAAAAAAAAAAEAAAASCwAAAAAAAAAAAPA/AAAAAAAA8D8AAAAAAAAA
+      AAAAAAAAAAAAAAAAAgAAABILAAAAAAAAAAAACEAAAAAAAADwPwAAAAAAAAAA
+      AAAAAAAAAAAAAAADAAAAEgsAAAAAAAAAAAAQQAAAAAAAAAhAAAAAAAAAAAAA
+      AAAAAAAAAAAAAAQAAAASCwAAAAAAAAAAAABAAAAAAAAAAEAAAAAAAAAAAAAA
+      AAAAAAAAAAAABQAAABILAAAAAAAAAAAAAAAAAAAAAAAUQAAAAAAAACJAAAAA
+      AAAAAEA=
+    EOS
+    (testpath/"brew.dbf").write ::Base64.decode64 <<-EOS.undent
+      A3IJGgUAAABhAFsAAAAAAAAAAAAAAAAAAAAAAAAAAABGSVJTVF9GTEQAAEMA
+      AAAAMgAAAAAAAAAAAAAAAAAAAFNFQ09ORF9GTEQAQwAAAAAoAAAAAAAAAAAA
+      AAAAAAAADSBGaXJzdCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAgIFBvaW50ICAgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgU2Vjb25kICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAgICBQb2ludCAgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgIFRoaXJkICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAgICAgUG9pbnQgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICBGb3VydGggICAgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAgICAgIFBvaW50ICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAgQXBwZW5kZWQgICAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAgICAgICBQb2ludCAgICAgICAgICAgICAgICAgICAgICAg
+      ICAgICAgICAgICAg
+    EOS
+    (testpath/"brew.shx").write ::Base64.decode64 <<-EOS.undent
+      AAAnCgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARugDAAALAAAAAAAAAAAAAAAA
+      AAAAAADwPwAAAAAAABBAAAAAAAAAFEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+      AAAAAAAAAAAAAAAAADIAAAASAAAASAAAABIAAABeAAAAEgAAAHQAAAASAAAA
+      igAAABI=
+    EOS
+    result = shell_output("#{bin}/shp2pgsql #{testpath}/brew.shp")
+    assert_match /Point/, result
+    assert_match /AddGeometryColumn/, result
   end
 end
