@@ -5,14 +5,14 @@ class Postgresql96 < Formula
   sha256 "06da12a7e3dddeb803962af8309fa06da9d6989f49e22865335f0a14bad0744c"
   head "https://github.com/postgres/postgres.git"
 
-  bottle do
-    sha256 "49fdadf8a3c6807f464248a0d150bb216dbc38648bd6278321f98e71c8cc043f" => :high_sierra
-    sha256 "d1cf9ba381f1a92fc4c5df2e861d40d05993ac39c8cd222dd72cd3c820af8cb4" => :sierra
-    sha256 "3b97a7f8b60b80afbcb91eeed7a69c72227b106cc3221566268511525c3322f3" => :el_capitan
-    sha256 "8a74b1afc029179dd1ff653e5a5016476ce0fd6e6260ca2a067b1de2043d0265" => :yosemite
-  end
+  #bottle do
+  #  sha256 "49fdadf8a3c6807f464248a0d150bb216dbc38648bd6278321f98e71c8cc043f" => :high_sierra
+  #  sha256 "d1cf9ba381f1a92fc4c5df2e861d40d05993ac39c8cd222dd72cd3c820af8cb4" => :sierra
+  #  sha256 "3b97a7f8b60b80afbcb91eeed7a69c72227b106cc3221566268511525c3322f3" => :el_capitan
+  #  sha256 "8a74b1afc029179dd1ff653e5a5016476ce0fd6e6260ca2a067b1de2043d0265" => :yosemite
+  #end
 
-  keg_only :versioned_formula
+  #keg_only :versioned_formula
 
   option "without-perl", "Build without Perl support"
   option "without-tcl", "Build without Tcl support"
@@ -105,11 +105,11 @@ class Postgresql96 < Formula
       https://www.postgresql.org/docs/9.5/static/pgupgrade.html
 
       You will need your previous PostgreSQL installation from brew to perform `pg_upgrade`.
-      Do not run `brew cleanup postgresql@9.5` until you have performed the migration.
+      Do not run `brew cleanup postgresql96` until you have performed the migration.
     EOS
   end
 
-  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgresql@9.5 start"
+  plist_options :manual => "pg_ctl -D #{HOMEBREW_PREFIX}/var/postgresql96 start"
 
   def plist; <<-EOS.undent
     <?xml version="1.0" encoding="UTF-8"?>
